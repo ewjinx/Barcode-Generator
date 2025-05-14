@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Barcode Generator</title>
+  <style>
+    :root {
+      --bg-color: #121212;
+      --fg-color: #e0e0e0;
+      --accent-color: #00bcd4;
+      --input-bg: #1e1e1e;
+      --border-color: #333;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--fg-color);
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    h1 {
+      margin-bottom: 2rem;
+      font-size: 2rem;
+      font-weight: 500;
+    }
+
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      margin-bottom: 2rem;
+      width: 100%;
+      max-width: 800px;
+    }
+
+    input[type="text"] {
+      padding: 0.8rem 1rem;
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--fg-color);
+      width: 100%;
+      max-width: 300px;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: 0.8rem 1.2rem;
+      background-color: var(--accent-color);
+      border: none;
+      border-radius: 6px;
+      color: #000;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease-in-out;
+    }
+
+    button:hover {
+      background-color: #00acc1;
+    }
+
+    #barcodeContainerWrapper {
+      background-color: var(--input-bg);
+      padding: 2rem;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+      display: flex;
+      justify-content: center;
+    }
+
+    canvas {
+      max-width: 100%;
+      height: auto;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printableArea, #printableArea * {
+        visibility: visible;
+      }
+      #printableArea {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        padding: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Barcode Generator</h1>
+
+  <form id="barcodeForm">
+    <input type="text" id="labelInput" placeholder="Enter a label..." required />
+    <input type="text" id="barcodeInput" placeholder="Enter a barcode value..." required />
+    <button type="submit">Generate</button>
+    <button type="button" onclick="downloadBarcode()">Download</button>
+    <button type="button" onclick="window.print()">Print</button>
+  </form>
+
+  <div id="barcodeContainerWrapper">
+    <div id="printableArea">
+      <canvas id="barcodeContainer" width="2000" height="1000"></canvas>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+
+  <script>
+    function generateBarcode() {
+      const barcodeValue = $('#barcodeInput').val().trim();
+      const labelValue = $('#labelInput').val().trim();
+
+      // Replace canvas to reset
+      $('#barcodeContainer').remove();
+      $('#printableArea').html('<canvas id="barcodeContainer" width="2000" height="1000"></canvas>');
+
+      // Only show the labelInput as the text below the barcode
+      JsBarcode("#barcodeContainer", barcodeValue, {
+        text: labelValue, // Only the label
+        format: "CODE128",
+        width: 6,
+        height: 400,
+        fontSize: 60,
+        margin: 30,
+        displayValue: true,
+        textAlign: "center",
+      });
+    }
+
+    function downloadBarcode() {
+      const canvas = document.getElementById('barcodeContainer');
+      const barcodeValue = document.getElementById('barcodeInput').value.trim();
+      const labelValue = document.getElementById('labelInput').value.trim();
+      // Sanitize filename (remove invalid characters)
+      const safeBarcode = barcodeValue.replace(/[^a-z0-9_\-]/gi, '_');
+      const safeLabel = labelValue.replace(/[^a-z0-9_\-]/gi, '_');
+      const filename = `${safeBarcode}-${safeLabel}.png`;
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+    $('#barcodeForm').on('submit', function (event) {
+      event.preventDefault();
+      generateBarcode();
+    });
+  </script>
+</body>
+</html>
